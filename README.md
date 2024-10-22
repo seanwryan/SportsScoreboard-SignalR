@@ -22,3 +22,5 @@ Persisting scores using a database.
 Improved UI and scoreboard styling.
 License
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+I would like to acknowledge the assistance of OpenAI's ChatGPT in providing guidance and code snippets for visualizing the data used in this project. ChatGPT helped refine the design and implementation of the stacked bar chart for outcome distribution in this analysis.
