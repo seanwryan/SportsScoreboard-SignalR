@@ -1,0 +1,51 @@
+﻿<h1>@ViewData["Message"]</h1>
+
+<div id="scoreboard">
+    <h2>Live Scoreboard</h2>
+    <p id="team1-score">Team 1: 0</p>
+    <p id="team2-score">Team 2: 0</p>
+</div>
+
+<form id="scoreForm">
+    <label>Team 1: </label>
+    <input type="text" id="team1" name="team1" /><br>
+    <label>Team 2: </label>
+    <input type="text" id="team2" name="team2" /><br>
+    <label>Score 1: </label>
+    <input type="number" id="score1" name="score1" /><br>
+    <label>Score 2: </label>
+    <input type="number" id="score2" name="score2" /><br>
+    <input type="submit" value="Submit Score" />
+</form>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.9/signalr.min.js"></script>
+
+<script>
+    // Connect to the SignalR Hub
+    var connection = new signalR.HubConnectionBuilder().withUrl("/scoreHub").build();
+
+    // Start the connection
+    connection.start().catch(function (err) {
+        return console.error(err.toString());
+    });
+
+    // Form submit handler
+    document.getElementById("scoreForm").addEventListener("submit", function (event) {
+        event.preventDefault();
+        var team1 = document.getElementById("team1").value;
+        var team2 = document.getElementById("team2").value;
+        var score1 = document.getElementById("score1").value;
+        var score2 = document.getElementById("score2").value;
+
+        // Send score update via SignalR
+        connection.invoke("SendScoreUpdate", team1, team2, parseInt(score1), parseInt(score2)).catch(function (err) {
+            return console.error(err.toString());
+        });
+    });
+
+    // Receive real-time score updates and update the scoreboard
+    connection.on("ReceiveScoreUpdate", function (team1, team2, score1, score2) {
+        document.getElementById("team1-score").innerText = team1 + ": " + score1;
+        document.getElementById("team2-score").innerText = team2 + ": " + score2;
+    });
+</script>
