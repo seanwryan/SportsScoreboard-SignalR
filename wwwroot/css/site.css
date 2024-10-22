@@ -20,3 +20,38 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+#scoreboard {
+  background-color: #f1f1f1;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  width: 50%;
+  margin: 20px auto;
+}
+
+#scoreboard h2 {
+  font-family: Arial, sans-serif;
+  color: #333;
+}
+
+#scoreboard p {
+  font-size: 18px;
+  font-weight: bold;
+  color: #000;
+  margin: 10px 0;
+}
+
+#pastGames {
+  margin-top: 20px;
+}
+
+#pastGames ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+#pastGames li {
+  font-size: 16px;
+  margin-bottom: 10px;
+}
