@@ -1,4 +1,4 @@
-﻿<h1>Welcome to the Sports Scoreboard!</h1>
+﻿<h1>@ViewData["Message"]</h1>
 
 <!-- Live Scoreboard Section -->
 <div id="scoreboard">
@@ -7,31 +7,52 @@
     <p id="team2-score">Team 2: 0</p>
 </div>
 
-<!-- Form to Submit New Scores -->
-<form method="post" asp-action="SubmitScore">
-    <label>Team 1: </label>
-    <input type="text" id="team1" name="team1" /><br>
-    <label>Team 2: </label>
-    <input type="text" id="team2" name="team2" /><br>
-    <label>Score 1: </label>
-    <input type="number" id="score1" name="score1" /><br>
-    <label>Score 2: </label>
-    <input type="number" id="score2" name="score2" /><br>
-    <input type="submit" value="Submit Score" />
-</form>
-
 <!-- Past Games Section -->
 <h2>Past Games</h2>
 <div id="pastGames">
-    <ul>
+    <ul id="pastGamesList">
         @foreach (var score in ViewBag.PastScores)
         {
-            <li>@score.Team1 @score.Score1 - @score.Team2 @score.Score2</li>
+            <li>@score.Team1 @score.Score1 - @score.Team2 @score.Score2 (@score.DateSubmitted.ToShortDateString())
+                <a href="/Home/Edit/@score.Id">Edit</a>
+                <a href="/Home/Delete/@score.Id">Delete</a>
+            </li>
         }
     </ul>
 </div>
 
-<!-- JavaScript for SignalR -->
+<!-- Form to submit new scores -->
+<form id="scoreForm">
+    <label>Team 1: </label>
+    <input type="text" id="team1" name="team1" /><br>
+
+    <label>Team 2: </label>
+    <input type="text" id="team2" name="team2" /><br>
+
+    <label>Score 1: </label>
+    <input type="number" id="score1" name="score1" /><br>
+
+    <label>Score 2: </label>
+    <input type="number" id="score2" name="score2" /><br>
+
+    <label>Date: </label>
+    <input type="date" id="dateSubmitted" name="dateSubmitted" /><br>
+
+    <input type="submit" value="Submit Score" />
+</form>
+
+<!-- Filtering form for past games -->
+<h3>Filter Past Games</h3>
+<form method="get" id="filterForm">
+    <label>Start Date: </label>
+    <input type="date" name="startDate" /><br>
+    <label>End Date: </label>
+    <input type="date" name="endDate" /><br>
+    <label>Team: </label>
+    <input type="text" name="team" /><br>
+    <input type="submit" value="Filter" />
+</form>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.9/signalr.min.js"></script>
 
 <script>
@@ -43,16 +64,17 @@
         return console.error(err.toString());
     });
 
-    // Form submit handler
+    // Form submit handler for real-time updates
     document.getElementById("scoreForm").addEventListener("submit", function (event) {
         event.preventDefault();
         var team1 = document.getElementById("team1").value;
         var team2 = document.getElementById("team2").value;
         var score1 = document.getElementById("score1").value;
         var score2 = document.getElementById("score2").value;
+        var dateSubmitted = document.getElementById("dateSubmitted").value;
 
         // Send score update via SignalR
-        connection.invoke("SendScoreUpdate", team1, team2, parseInt(score1), parseInt(score2)).catch(function (err) {
+        connection.invoke("SendScoreUpdate", team1, team2, parseInt(score1), parseInt(score2), dateSubmitted).catch(function (err) {
             return console.error(err.toString());
         });
     });
@@ -61,5 +83,16 @@
     connection.on("ReceiveScoreUpdate", function (team1, team2, score1, score2) {
         document.getElementById("team1-score").innerText = team1 + ": " + score1;
         document.getElementById("team2-score").innerText = team2 + ": " + score2;
+    });
+
+    // Receive real-time past games updates
+    connection.on("ReceivePastGamesUpdate", function (pastGames) {
+        var pastGamesList = document.getElementById("pastGamesList");
+        pastGamesList.innerHTML = "";
+        pastGames.forEach(function(game) {
+            var li = document.createElement("li");
+            li.innerHTML = game.team1 + " " + game.score1 + " - " + game.team2 + " " + game.score2 + " (" + new Date(game.dateSubmitted).toLocaleDateString() + ")";
+            pastGamesList.appendChild(li);
+        });
     });
 </script>

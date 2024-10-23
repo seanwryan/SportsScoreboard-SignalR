@@ -7,8 +7,12 @@ namespace SportsScoreboard.Hubs
 {
     public class ScoreHub : Hub
     {
-        public async Task SendScoreUpdate(string team1, string team2, int score1, int score2)
+        // Method for sending score updates
+        public async Task SendScoreUpdate(string team1, string team2, int score1, int score2, string dateSubmitted)
         {
+            // Parse the submitted date
+            var parsedDate = DateTime.TryParse(dateSubmitted, out var date) ? date : DateTime.Now;
+
             // Save the score to the database
             using (var context = new ScoreboardContext())
             {
@@ -17,15 +21,23 @@ namespace SportsScoreboard.Hubs
                     Team1 = team1,
                     Team2 = team2,
                     Score1 = score1,
-                    Score2 = score2
+                    Score2 = score2,
+                    DateSubmitted = parsedDate // Save the parsed date or current date if parsing fails
                 };
-                
+
                 context.Scores.Add(score);
                 await context.SaveChangesAsync();
             }
 
             // Send score update to all clients
             await Clients.All.SendAsync("ReceiveScoreUpdate", team1, team2, score1, score2);
+
+            // Send past games update to all clients
+            using (var context = new ScoreboardContext())
+            {
+                var pastScores = context.Scores.ToList();
+                await Clients.All.SendAsync("ReceivePastGamesUpdate", pastScores);
+            }
         }
     }
 }

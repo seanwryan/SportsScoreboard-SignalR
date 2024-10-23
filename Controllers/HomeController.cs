@@ -2,59 +2,137 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using SportsScoreboard.Models;
 using SportsScoreboard.Data;
-using SportsScoreboard.Models;
+using Microsoft.AspNetCore.SignalR;
+using SportsScoreboard.Hubs;
 
-namespace SportsScoreboard.Controllers;
-
-public class HomeController : Controller
+namespace SportsScoreboard.Controllers
 {
-    private readonly ILogger<HomeController> _logger;
-
-    public HomeController(ILogger<HomeController> logger)
+    public class HomeController : Controller
     {
-        _logger = logger;
-    }
+        private readonly ILogger<HomeController> _logger;
+        private readonly IHubContext<ScoreHub> _hubContext;
 
-    public IActionResult Index()
-    {
-        using (var context = new ScoreboardContext())
+        public HomeController(ILogger<HomeController> logger, IHubContext<ScoreHub> hubContext)
         {
-            var pastScores = context.Scores.ToList();
-            ViewBag.PastScores = pastScores;
+            _logger = logger;
+            _hubContext = hubContext;
         }
-        return View();
-    }
 
-    [HttpPost]
-    public IActionResult SubmitScore(string team1, string team2, int score1, int score2)
-    {
-        using (var context = new ScoreboardContext())
+        // Updated Index method for filtering and displaying past games
+        public IActionResult Index(DateTime? startDate, DateTime? endDate, string team)
         {
-            // Create a new Score object with form data
-            var score = new Score
+            using (var context = new ScoreboardContext())
             {
-                Team1 = team1,
-                Team2 = team2,
-                Score1 = score1,
-                Score2 = score2
-            };
+                // Base query
+                var scoresQuery = context.Scores.AsQueryable();
 
-            // Add the score to the database
-            context.Scores.Add(score);
-            context.SaveChanges();  // Save the changes to the database
+                // Apply date filters if provided
+                if (startDate.HasValue)
+                {
+                    scoresQuery = scoresQuery.Where(s => s.DateSubmitted >= startDate.Value);
+                }
+                if (endDate.HasValue)
+                {
+                    scoresQuery = scoresQuery.Where(s => s.DateSubmitted <= endDate.Value);
+                }
+
+                // Apply team filter if provided
+                if (!string.IsNullOrEmpty(team))
+                {
+                    scoresQuery = scoresQuery.Where(s => s.Team1.Contains(team) || s.Team2.Contains(team));
+                }
+
+                var pastScores = scoresQuery.ToList();
+                ViewBag.PastScores = pastScores;
+            }
+            return View();
         }
 
-        return RedirectToAction("Index");
-    }
+        // Method to handle score submissions
+        [HttpPost]
+        public async Task<IActionResult> SubmitScore(string team1, string team2, int score1, int score2, DateTime dateSubmitted)
+        {
+            using (var context = new ScoreboardContext())
+            {
+                var newScore = new Score
+                {
+                    Team1 = team1,
+                    Team2 = team2,
+                    Score1 = score1,
+                    Score2 = score2,
+                    DateSubmitted = dateSubmitted
+                };
+                context.Scores.Add(newScore);
+                context.SaveChanges();
+            }
 
-    public IActionResult Privacy()
-    {
-        return View();
-    }
+            // Update past games via SignalR
+            await _hubContext.Clients.All.SendAsync("ReceivePastGamesUpdate", GetPastGames());
+            return RedirectToAction("Index");
+        }
 
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
-    {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        // Helper method to retrieve the past games list
+        private List<Score> GetPastGames()
+        {
+            using (var context = new ScoreboardContext())
+            {
+                return context.Scores.OrderBy(s => s.DateSubmitted).ToList();
+            }
+        }
+
+        // Edit view
+        public IActionResult Edit(int id)
+        {
+            using (var context = new ScoreboardContext())
+            {
+                var score = context.Scores.FirstOrDefault(s => s.Id == id);
+                return View(score);
+            }
+        }
+
+        [HttpPost]
+        public IActionResult Edit(Score updatedScore)
+        {
+            using (var context = new ScoreboardContext())
+            {
+                var existingScore = context.Scores.FirstOrDefault(s => s.Id == updatedScore.Id);
+                if (existingScore != null)
+                {
+                    existingScore.Team1 = updatedScore.Team1;
+                    existingScore.Team2 = updatedScore.Team2;
+                    existingScore.Score1 = updatedScore.Score1;
+                    existingScore.Score2 = updatedScore.Score2;
+                    existingScore.DateSubmitted = updatedScore.DateSubmitted;
+                    context.SaveChanges();
+                }
+            }
+            return RedirectToAction("Index");
+        }
+
+        // Delete action
+        public IActionResult Delete(int id)
+        {
+            using (var context = new ScoreboardContext())
+            {
+                var score = context.Scores.FirstOrDefault(s => s.Id == id);
+                if (score != null)
+                {
+                    context.Scores.Remove(score);
+                    context.SaveChanges();
+                }
+            }
+            return RedirectToAction("Index");
+        }
+
+        public IActionResult Privacy()
+        {
+            return View();
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
     }
 }

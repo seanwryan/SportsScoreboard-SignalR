@@ -1,0 +1,21 @@
+@model SportsScoreboard.Models.Score
+
+<h2>Edit Game</h2>
+
+<form asp-action="Edit">
+    <input type="hidden" asp-for="Id" />
+    
+    <label>Team 1: </label>
+    <input asp-for="Team1" /><br>
+    
+    <label>Score 1: </label>
+    <input asp-for="Score1" /><br>
+    
+    <label>Team 2: </label>
+    <input asp-for="Team2" /><br>
+    
+    <label>Score 2: </label>
+    <input asp-for="Score2" /><br>
+    
+    <input type="submit" value="Save Changes" />
+</form>
