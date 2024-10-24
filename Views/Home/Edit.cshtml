@@ -4,18 +4,32 @@
 
 <form asp-action="Edit">
     <input type="hidden" asp-for="Id" />
-    
+
     <label>Team 1: </label>
     <input asp-for="Team1" /><br>
-    
+
     <label>Score 1: </label>
-    <input asp-for="Score1" /><br>
-    
+    <input asp-for="Score1" type="number" min="0" /><br>
+
     <label>Team 2: </label>
     <input asp-for="Team2" /><br>
-    
+
     <label>Score 2: </label>
-    <input asp-for="Score2" /><br>
-    
+    <input asp-for="Score2" type="number" min="0" /><br>
+
+    <label>Date: </label>
+    <input asp-for="DateSubmitted" type="date" /><br>
+
+    <label>Location: </label>
+    <input asp-for="Location" /><br>
+
+    <label>Game Type: </label>
+    <input asp-for="GameType" /><br>
+
+    <label>Player of the Game: </label>
+    <input asp-for="PlayerOfTheGame" /><br>
+
     <input type="submit" value="Save Changes" />
 </form>
+
+<a asp-action="Index">Back to Past Games</a>

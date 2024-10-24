@@ -13,8 +13,11 @@
     <ul id="pastGamesList">
         @foreach (var score in ViewBag.PastScores)
         {
-            <li>@score.Team1 @score.Score1 - @score.Team2 @score.Score2 (@score.DateSubmitted.ToShortDateString())
-                <a href="/Home/Edit/@score.Id">Edit</a>
+            <li>@score.Team1 @score.Score1 - @score.Team2 @score.Score2 (@score.DateSubmitted.ToShortDateString()) 
+                <br><strong>Location:</strong> @score.Location
+                <br><strong>Game Type:</strong> @score.GameType
+                <br><strong>Player of the Game:</strong> @score.PlayerOfTheGame
+                <br><a href="/Home/Edit/@score.Id">Edit</a>
                 <a href="/Home/Delete/@score.Id">Delete</a>
             </li>
         }
@@ -22,32 +25,40 @@
 </div>
 
 <!-- Form to submit new scores -->
-<form id="scoreForm">
+<form asp-action="SubmitScore" method="post" id="scoreForm">
+    <h3>Submit New Game</h3>
     <label>Team 1: </label>
-    <input type="text" id="team1" name="team1" /><br>
+    <input type="text" id="team1" name="team1" required/><br>
 
     <label>Team 2: </label>
-    <input type="text" id="team2" name="team2" /><br>
+    <input type="text" id="team2" name="team2" required/><br>
 
     <label>Score 1: </label>
-    <input type="number" id="score1" name="score1" /><br>
+    <input type="number" id="score1" name="score1" min="0" required/><br>
 
     <label>Score 2: </label>
-    <input type="number" id="score2" name="score2" /><br>
+    <input type="number" id="score2" name="score2" min="0" required/><br>
 
     <label>Date: </label>
-    <input type="date" id="dateSubmitted" name="dateSubmitted" /><br>
+    <input type="date" id="dateSubmitted" name="dateSubmitted" required/><br>
+
+    <label>Location: </label>
+    <input type="text" id="location" name="location" required/><br>
+
+    <label>Game Type: </label>
+    <input type="text" id="gameType" name="gameType" required/><br>
+
+    <label>Player of the Game: </label>
+    <input type="text" id="playerOfTheGame" name="playerOfTheGame" required/><br>
 
     <input type="submit" value="Submit Score" />
 </form>
 
-<!-- Filtering form for past games -->
+<!-- Filtering form for past games by a single date -->
 <h3>Filter Past Games</h3>
 <form method="get" id="filterForm">
-    <label>Start Date: </label>
-    <input type="date" name="startDate" /><br>
-    <label>End Date: </label>
-    <input type="date" name="endDate" /><br>
+    <label>Game Date: </label>
+    <input type="date" name="gameDate" /><br>
     <label>Team: </label>
     <input type="text" name="team" /><br>
     <input type="submit" value="Filter" />
@@ -71,12 +82,22 @@
         var team2 = document.getElementById("team2").value;
         var score1 = document.getElementById("score1").value;
         var score2 = document.getElementById("score2").value;
-        var dateSubmitted = document.getElementById("dateSubmitted").value;
+        var dateSubmitted = new Date(document.getElementById("dateSubmitted").value).toISOString();  // Convert date to ISO string
+        var location = document.getElementById("location").value;
+        var gameType = document.getElementById("gameType").value;
+        var playerOfTheGame = document.getElementById("playerOfTheGame").value;
 
         // Send score update via SignalR
-        connection.invoke("SendScoreUpdate", team1, team2, parseInt(score1), parseInt(score2), dateSubmitted).catch(function (err) {
-            return console.error(err.toString());
+        connection.invoke("SendScoreUpdate", team1, team2, parseInt(score1), parseInt(score2), dateSubmitted, location, gameType, playerOfTheGame)
+        .then(() => {
+            console.log("Score submission sent");
+        })
+        .catch(function (err) {
+            console.error(err.toString());
         });
+
+        // Clear the form after submission
+        document.getElementById("scoreForm").reset();
     });
 
     // Receive real-time score updates and update the scoreboard
@@ -91,7 +112,12 @@
         pastGamesList.innerHTML = "";
         pastGames.forEach(function(game) {
             var li = document.createElement("li");
-            li.innerHTML = game.team1 + " " + game.score1 + " - " + game.team2 + " " + game.score2 + " (" + new Date(game.dateSubmitted).toLocaleDateString() + ")";
+            li.innerHTML = game.team1 + " " + game.score1 + " - " + game.team2 + " " + game.score2 + " (" + new Date(game.dateSubmitted).toLocaleDateString() + ")" +
+                "<br><strong>Location:</strong> " + game.location + 
+                "<br><strong>Game Type:</strong> " + game.gameType +
+                "<br><strong>Player of the Game:</strong> " + game.playerOfTheGame +
+                "<br><a href='/Home/Edit/" + game.id + "'>Edit</a>" +
+                " <a href='/Home/Delete/" + game.id + "'>Delete</a>";
             pastGamesList.appendChild(li);
         });
     });

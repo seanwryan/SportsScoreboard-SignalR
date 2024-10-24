@@ -4,6 +4,8 @@ using SportsScoreboard.Models;
 using SportsScoreboard.Data;
 using Microsoft.AspNetCore.SignalR;
 using SportsScoreboard.Hubs;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace SportsScoreboard.Controllers
 {
@@ -18,22 +20,17 @@ namespace SportsScoreboard.Controllers
             _hubContext = hubContext;
         }
 
-        // Updated Index method for filtering and displaying past games
-        public IActionResult Index(DateTime? startDate, DateTime? endDate, string team)
+        // Index method for filtering and displaying past games by date and team
+        public IActionResult Index(DateTime? gameDate, string team)
         {
             using (var context = new ScoreboardContext())
             {
-                // Base query
                 var scoresQuery = context.Scores.AsQueryable();
 
-                // Apply date filters if provided
-                if (startDate.HasValue)
+                // Apply date filter if provided
+                if (gameDate.HasValue)
                 {
-                    scoresQuery = scoresQuery.Where(s => s.DateSubmitted >= startDate.Value);
-                }
-                if (endDate.HasValue)
-                {
-                    scoresQuery = scoresQuery.Where(s => s.DateSubmitted <= endDate.Value);
+                    scoresQuery = scoresQuery.Where(s => s.DateSubmitted.Date == gameDate.Value.Date);
                 }
 
                 // Apply team filter if provided
@@ -42,16 +39,19 @@ namespace SportsScoreboard.Controllers
                     scoresQuery = scoresQuery.Where(s => s.Team1.Contains(team) || s.Team2.Contains(team));
                 }
 
-                var pastScores = scoresQuery.ToList();
+                var pastScores = scoresQuery.OrderByDescending(s => s.DateSubmitted).ToList();
                 ViewBag.PastScores = pastScores;
             }
             return View();
         }
 
-        // Method to handle score submissions
+        // Method to handle score submissions, including new fields
         [HttpPost]
-        public async Task<IActionResult> SubmitScore(string team1, string team2, int score1, int score2, DateTime dateSubmitted)
+        public async Task<IActionResult> SubmitScore(string team1, string team2, int score1, int score2, DateTime dateSubmitted, string location, string gameType, string playerOfTheGame)
         {
+            // Logging form data for troubleshooting
+            Console.WriteLine($"Form Data: {team1}, {team2}, {score1}-{score2}, {dateSubmitted}, {location}, {gameType}, {playerOfTheGame}");
+
             using (var context = new ScoreboardContext())
             {
                 var newScore = new Score
@@ -60,10 +60,16 @@ namespace SportsScoreboard.Controllers
                     Team2 = team2,
                     Score1 = score1,
                     Score2 = score2,
-                    DateSubmitted = dateSubmitted
+                    DateSubmitted = dateSubmitted,
+                    Location = location,
+                    GameType = gameType,
+                    PlayerOfTheGame = playerOfTheGame
                 };
                 context.Scores.Add(newScore);
                 context.SaveChanges();
+                
+                // Logging for successful database save
+                Console.WriteLine("New score saved successfully");
             }
 
             // Update past games via SignalR
@@ -80,7 +86,7 @@ namespace SportsScoreboard.Controllers
             }
         }
 
-        // Edit view
+        // Edit view - updated to include the new fields (Location, GameType, PlayerOfTheGame)
         public IActionResult Edit(int id)
         {
             using (var context = new ScoreboardContext())
@@ -103,6 +109,9 @@ namespace SportsScoreboard.Controllers
                     existingScore.Score1 = updatedScore.Score1;
                     existingScore.Score2 = updatedScore.Score2;
                     existingScore.DateSubmitted = updatedScore.DateSubmitted;
+                    existingScore.Location = updatedScore.Location;
+                    existingScore.GameType = updatedScore.GameType;
+                    existingScore.PlayerOfTheGame = updatedScore.PlayerOfTheGame;
                     context.SaveChanges();
                 }
             }
