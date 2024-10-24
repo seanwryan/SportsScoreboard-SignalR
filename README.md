@@ -15,7 +15,7 @@ Responsive UI: The scoreboard is styled for a seamless experience across both de
 cd SportsScoreboard-SignalR
 3. Run the project:
 dotnet run
-4. Open your browser and go to http://localhost:5048 (or the specified port).
+4. Open your browser and go to http://localhost:5048.
 
 Future Enhancements
 User Authentication: Implement user authentication to allow users to manage only their own score entries.
