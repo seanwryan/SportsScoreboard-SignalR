@@ -1,27 +1,85 @@
-SportsScoreboard-SignalR
-This project is a real-time sports scoreboard built with ASP.NET Core and SignalR. It allows users to submit, view, and manage sports scores dynamically without refreshing the page.
+# SportsScoreboard-SignalR
 
-Features
-Real-time Updates using SignalR: Scores update live for all connected users as soon as they are submitted or modified.
-Submit, Edit, and Delete Scores: Users can submit new game entries with team names, scores, dates, game types, locations, and players of the game. They can also edit or delete past game entries.
-Filter Past Games: Users can filter past games by date and team name to quickly find relevant game results.
-Responsive UI: The scoreboard is styled for a seamless experience across both desktop and mobile devices.
+A real-time sports scoreboard web application developed with C# and .NET, using SignalR for live updates. This project allows users to view, submit, edit, and delete scores for various sports games. The app is designed to showcase skills in C#, .NET, Git, and real-time data handling, with plans to integrate a predictive model for game outcomes.
 
-## How to Run Locally
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/seanwryan/SportsScoreboard-SignalR.git
-2. Navigate to the project directory:
-cd SportsScoreboard-SignalR
-3. Run the project:
-dotnet run
-4. Open your browser and go to http://localhost:5048.
+## Features
 
-Future Enhancements
-User Authentication: Implement user authentication to allow users to manage only their own score entries.
-Advanced Filtering: Add more filtering options based on additional metrics, such as team rankings, or introduce date-based visualizations.
-Enhanced Styling: Improve the user interface with a more polished design and better mobile responsiveness.
-Game Statistics: Provide additional statistics for each game, such as top players, audience count, or referee information.
+- **Live Scoreboard**: View real-time updates of games with SignalR.
+- **Game Entry Management**: Add new games with detailed information:
+  - Home Team, Away Team
+  - Scores for both teams
+  - Date and Location
+  - Game Type (e.g., Regular Season, Playoffs)
+  - Sport (currently supports Football, Baseball, Hockey, Basketball)
+- **Edit and Delete Entries**: Modify or remove entries in the past games list.
+- **Filter Games**: Filter past games by date or team.
+  
+## Planned Features
+
+- **Predictive Model**: Incorporate a predictive model to forecast scores for future games based on historical data.
+- **Advanced Statistics**: Introduce more statistical fields and in-depth analytics for each game.
+
+## Technologies Used
+
+- **C# and .NET Core**: Backend development.
+- **SignalR**: Real-time communication for live updates.
+- **Bootstrap**: Frontend styling.
+- **Entity Framework Core**: Database operations.
+
+## Getting Started
+
+### Prerequisites
+
+- [.NET Core SDK](https://dotnet.microsoft.com/download)
+- [SQL Server or SQLite](https://www.sqlite.org/download.html) (or another database compatible with Entity Framework Core)
+
+### Setup
+
+1. **Clone the repository**:
+    ```bash
+    git clone https://github.com/seanwryan/SportsScoreboard-SignalR.git
+    cd SportsScoreboard-SignalR
+    ```
+
+2. **Restore dependencies**:
+    ```bash
+    dotnet restore
+    ```
+
+3. **Setup the database**:
+   - Update the database with Entity Framework migrations:
+     ```bash
+     dotnet ef database update
+     ```
+
+4. **Run the application**:
+    ```bash
+    dotnet run
+    ```
+   The application will be available at `http://localhost:5048'.
+
+### Usage
+
+- **Add a Game**: Use the “Submit New Game” form on the homepage to enter a game’s details.
+- **View Past Games**: See the list of past games with scores and details. Edit or delete games directly from this list.
+- **Filter Games**: Filter the list of past games by date or team name.
+- **Live Score Updates**: Observe real-time updates to scores with SignalR.
+
+### Project Structure
+
+- **Controllers**: Handles HTTP requests, primarily for CRUD operations on game entries.
+- **Models**: Defines data structures, including the `Score` model for storing game data.
+- **Services**: Contains business logic, including data access and SignalR communication.
+- **Views**: Contains Razor views, including pages for game management and real-time updates.
+
+### Contributing
+
+Contributions are welcome! Please fork the repository and create a pull request with any improvements.
+
+---
+
+**Author**: Sean Ryan  
+**GitHub**: [https://github.com/seanwryan](https://github.com/seanwryan)
 
 Acknowledgements
 I would like to acknowledge the assistance of OpenAI's ChatGPT in providing guidance and code snippets for developing features such as real-time updates, database integration, and design of the project.
