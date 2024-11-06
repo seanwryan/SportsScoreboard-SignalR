@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.SignalR;
 using SportsScoreboard.Hubs;
+using SportsScoreboard.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddSignalR();  // Add SignalR
+builder.Services.AddScoped<ScoreService>();  // Register the ScoreService as a scoped dependency
 
 var app = builder.Build();
 
@@ -28,6 +30,6 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 // Map SignalR hubs
-app.MapHub<ScoreHub>("/scoreHub");  // Add this line to map your SignalR hub
+app.MapHub<ScoreHub>("/scoreHub");
 
 app.Run();

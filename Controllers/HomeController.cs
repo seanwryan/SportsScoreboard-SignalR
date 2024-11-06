@@ -1,11 +1,9 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using SportsScoreboard.Models;
-using SportsScoreboard.Data;
+using SportsScoreboard.Services;
 using Microsoft.AspNetCore.SignalR;
 using SportsScoreboard.Hubs;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace SportsScoreboard.Controllers
 {
@@ -13,131 +11,105 @@ namespace SportsScoreboard.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly IHubContext<ScoreHub> _hubContext;
+        private readonly ScoreService _scoreService;
 
-        public HomeController(ILogger<HomeController> logger, IHubContext<ScoreHub> hubContext)
+        // Constructor to include ScoreService as a dependency
+        public HomeController(ILogger<HomeController> logger, IHubContext<ScoreHub> hubContext, ScoreService scoreService)
         {
             _logger = logger;
             _hubContext = hubContext;
+            _scoreService = scoreService;
         }
 
-        // Index method for filtering and displaying past games by date and team
+        // Display index page with optional filtering by game date and team
         public IActionResult Index(DateTime? gameDate, string team)
         {
-            using (var context = new ScoreboardContext())
-            {
-                var scoresQuery = context.Scores.AsQueryable();
-
-                // Apply date filter if provided
-                if (gameDate.HasValue)
-                {
-                    scoresQuery = scoresQuery.Where(s => s.DateSubmitted.Date == gameDate.Value.Date);
-                }
-
-                // Apply team filter if provided
-                if (!string.IsNullOrEmpty(team))
-                {
-                    scoresQuery = scoresQuery.Where(s => s.Team1.Contains(team) || s.Team2.Contains(team));
-                }
-
-                var pastScores = scoresQuery.OrderByDescending(s => s.DateSubmitted).ToList();
-                ViewBag.PastScores = pastScores;
-            }
+            var pastScores = _scoreService.GetPastGames(gameDate, team);
+            ViewBag.PastScores = pastScores;
             return View();
         }
 
-        // Method to handle score submissions, including new fields
-        [HttpPost]
-        public async Task<IActionResult> SubmitScore(string team1, string team2, int score1, int score2, DateTime dateSubmitted, string location, string gameType, string playerOfTheGame)
+        // Display Create view to add a new game
+        public IActionResult Create()
         {
-            // Logging form data for troubleshooting
-            Console.WriteLine($"Form Data: {team1}, {team2}, {score1}-{score2}, {dateSubmitted}, {location}, {gameType}, {playerOfTheGame}");
+            return View();
+        }
 
-            using (var context = new ScoreboardContext())
+        // Handle score submission including new fields and notify clients with SignalR
+        [HttpPost]
+        public async Task<IActionResult> SubmitScore(string sport, string homeTeam, string awayTeam, int homeTeamScore, int awayTeamScore, DateTime dateSubmitted, string location, string gameType)
+        {
+            dateSubmitted = DateTime.SpecifyKind(dateSubmitted, DateTimeKind.Utc);
+            _logger.LogInformation($"Form Data: {sport}, {homeTeam}, {awayTeam}, {homeTeamScore}-{awayTeamScore}, {dateSubmitted}, {location}, {gameType}");
+
+            try
             {
-                var newScore = new Score
-                {
-                    Team1 = team1,
-                    Team2 = team2,
-                    Score1 = score1,
-                    Score2 = score2,
-                    DateSubmitted = dateSubmitted,
-                    Location = location,
-                    GameType = gameType,
-                    PlayerOfTheGame = playerOfTheGame
-                };
-                context.Scores.Add(newScore);
-                context.SaveChanges();
-                
-                // Logging for successful database save
-                Console.WriteLine("New score saved successfully");
+                _scoreService.SubmitScore(sport, homeTeam, awayTeam, homeTeamScore, awayTeamScore, dateSubmitted, location, gameType);
+                var updatedPastScores = _scoreService.GetPastGames(null, null);
+                await _hubContext.Clients.All.SendAsync("ReceivePastGamesUpdate", updatedPastScores);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error submitting score: {ex.Message}");
+                return View("Error", new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
             }
 
-            // Update past games via SignalR
-            await _hubContext.Clients.All.SendAsync("ReceivePastGamesUpdate", GetPastGames());
             return RedirectToAction("Index");
         }
 
-        // Helper method to retrieve the past games list
-        private List<Score> GetPastGames()
-        {
-            using (var context = new ScoreboardContext())
-            {
-                return context.Scores.OrderBy(s => s.DateSubmitted).ToList();
-            }
-        }
-
-        // Edit view - updated to include the new fields (Location, GameType, PlayerOfTheGame)
+        // Display edit view for a specific game
         public IActionResult Edit(int id)
         {
-            using (var context = new ScoreboardContext())
+            var pastScore = _scoreService.GetPastGames(null, null).FirstOrDefault(s => s.Id == id);
+            if (pastScore == null)
             {
-                var score = context.Scores.FirstOrDefault(s => s.Id == id);
-                return View(score);
+                _logger.LogWarning($"Game with ID {id} not found.");
+                return NotFound();
             }
+            return View(pastScore);
         }
 
+        // Handle form submission for editing a game score
         [HttpPost]
         public IActionResult Edit(Score updatedScore)
         {
-            using (var context = new ScoreboardContext())
+            try
             {
-                var existingScore = context.Scores.FirstOrDefault(s => s.Id == updatedScore.Id);
-                if (existingScore != null)
-                {
-                    existingScore.Team1 = updatedScore.Team1;
-                    existingScore.Team2 = updatedScore.Team2;
-                    existingScore.Score1 = updatedScore.Score1;
-                    existingScore.Score2 = updatedScore.Score2;
-                    existingScore.DateSubmitted = updatedScore.DateSubmitted;
-                    existingScore.Location = updatedScore.Location;
-                    existingScore.GameType = updatedScore.GameType;
-                    existingScore.PlayerOfTheGame = updatedScore.PlayerOfTheGame;
-                    context.SaveChanges();
-                }
+                _scoreService.EditScore(updatedScore);  // Pass updatedScore with new Sport value
             }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error editing score: {ex.Message}");
+                return View("Error", new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            }
+
             return RedirectToAction("Index");
         }
 
-        // Delete action
+        // Delete a game by ID
         public IActionResult Delete(int id)
         {
-            using (var context = new ScoreboardContext())
+            try
             {
-                var score = context.Scores.FirstOrDefault(s => s.Id == id);
-                if (score != null)
-                {
-                    context.Scores.Remove(score);
-                    context.SaveChanges();
-                }
+                // Delete score via ScoreService
+                _scoreService.DeleteScore(id);
             }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error deleting score: {ex.Message}");
+                return View("Error", new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            }
+
             return RedirectToAction("Index");
         }
 
+        // Privacy policy page
         public IActionResult Privacy()
         {
             return View();
         }
 
+        // Error handling view
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {

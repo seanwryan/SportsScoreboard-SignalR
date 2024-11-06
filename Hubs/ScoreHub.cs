@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
 using SportsScoreboard.Models;
 using SportsScoreboard.Data;
+using System;
 using System.Threading.Tasks;
 using System.Linq;
 
@@ -9,7 +10,7 @@ namespace SportsScoreboard.Hubs
     public class ScoreHub : Hub
     {
         // Method for sending score updates
-        public async Task SendScoreUpdate(string team1, string team2, int score1, int score2, string dateSubmitted, string location, string gameType, string playerOfTheGame)
+        public async Task SendScoreUpdate(string homeTeam, string awayTeam, int homeTeamScore, int awayTeamScore, string dateSubmitted, string location, string gameType)
         {
             // Parse the submitted date
             var parsedDate = DateTime.TryParse(dateSubmitted, out var date) ? date : DateTime.Now;
@@ -19,14 +20,13 @@ namespace SportsScoreboard.Hubs
             {
                 var score = new Score
                 {
-                    Team1 = team1,
-                    Team2 = team2,
-                    Score1 = score1,
-                    Score2 = score2,
+                    HomeTeam = homeTeam,
+                    AwayTeam = awayTeam,
+                    HomeTeamScore = homeTeamScore,
+                    AwayTeamScore = awayTeamScore,
                     DateSubmitted = parsedDate, // Save the parsed date or current date if parsing fails
                     Location = location,
-                    GameType = gameType,
-                    PlayerOfTheGame = playerOfTheGame
+                    GameType = gameType
                 };
 
                 context.Scores.Add(score);
@@ -34,7 +34,7 @@ namespace SportsScoreboard.Hubs
             }
 
             // Send score update to all clients
-            await Clients.All.SendAsync("ReceiveScoreUpdate", team1, team2, score1, score2);
+            await Clients.All.SendAsync("ReceiveScoreUpdate", homeTeam, awayTeam, homeTeamScore, awayTeamScore);
 
             // Send past games update to all clients
             using (var context = new ScoreboardContext())

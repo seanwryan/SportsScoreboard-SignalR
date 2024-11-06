@@ -1,69 +1,126 @@
-﻿<h1>@ViewData["Message"]</h1>
+﻿@{
+    ViewData["Title"] = "Home";
+}
+
+<h1 class="text-center my-4">@ViewData["Message"]</h1>
 
 <!-- Live Scoreboard Section -->
-<div id="scoreboard">
-    <h2>Live Scoreboard</h2>
-    <p id="team1-score">Team 1: 0</p>
-    <p id="team2-score">Team 2: 0</p>
+<div id="scoreboard" class="card my-4 p-4 text-center shadow-sm border-0">
+    <h2 class="card-title">Live Scoreboard</h2>
+    <div class="row">
+        <div class="col-md-6">
+            <p class="fs-4" id="homeTeam-score"><strong>Home Team:</strong> 0</p>
+        </div>
+        <div class="col-md-6">
+            <p class="fs-4" id="awayTeam-score"><strong>Away Team:</strong> 0</p>
+        </div>
+    </div>
 </div>
 
 <!-- Past Games Section -->
-<h2>Past Games</h2>
-<div id="pastGames">
-    <ul id="pastGamesList">
-        @foreach (var score in ViewBag.PastScores)
+<div class="card my-4 p-4 shadow-sm border-0">
+    <h2 class="card-title">Past Games</h2>
+    <div id="pastGames" class="list-group">
+        @if (ViewBag.PastScores != null && ViewBag.PastScores.Count > 0)
         {
-            <li>@score.Team1 @score.Score1 - @score.Team2 @score.Score2 (@score.DateSubmitted.ToShortDateString()) 
-                <br><strong>Location:</strong> @score.Location
-                <br><strong>Game Type:</strong> @score.GameType
-                <br><strong>Player of the Game:</strong> @score.PlayerOfTheGame
-                <br><a href="/Home/Edit/@score.Id">Edit</a>
-                <a href="/Home/Delete/@score.Id">Delete</a>
-            </li>
+            @foreach (var score in ViewBag.PastScores)
+            {
+                <div class="list-group-item list-group-item-action rounded shadow-sm mb-2">
+                    <h5 class="mb-1"><strong>Sport:</strong> @score.Sport</h5>
+                    <h5 class="mb-1"><strong>@score.HomeTeam</strong> @score.HomeTeamScore - <strong>@score.AwayTeam</strong>
+                        @score.AwayTeamScore</h5>
+                    <small class="text-muted">Date: @score.DateSubmitted.ToShortDateString()</small><br />
+                    <small><strong>Location:</strong> @score.Location</small><br />
+                    <small><strong>Game Type:</strong> @score.GameType</small><br />
+                    <div class="mt-2">
+                        <a class="btn btn-outline-primary btn-sm" href="/Home/Edit/@score.Id"><i class="fas fa-edit"></i>
+                            Edit</a>
+                        <a class="btn btn-outline-danger btn-sm" href="/Home/Delete/@score.Id"><i class="fas fa-trash-alt"></i>
+                            Delete</a>
+                    </div>
+                </div>
+            }
         }
-    </ul>
+        else
+        {
+            <p>No past games available.</p>
+        }
+    </div>
 </div>
 
 <!-- Form to submit new scores -->
-<form asp-action="SubmitScore" method="post" id="scoreForm">
-    <h3>Submit New Game</h3>
-    <label>Team 1: </label>
-    <input type="text" id="team1" name="team1" required/><br>
+<div class="card my-4 p-4 shadow-sm border-0">
+    <h3 class="card-title">Submit New Game</h3>
+    <form asp-action="SubmitScore" method="post" id="scoreForm">
+        <div class="mb-3">
+            <label for="sport" class="form-label">Sport</label>
+            <input type="text" id="sport" name="sport" class="form-control" placeholder="Enter Sport" required />
+        </div>
 
-    <label>Team 2: </label>
-    <input type="text" id="team2" name="team2" required/><br>
+        <div class="row mb-3">
+            <div class="col">
+                <label for="homeTeam" class="form-label">Home Team</label>
+                <input type="text" id="homeTeam" name="homeTeam" class="form-control" placeholder="Enter Home Team"
+                    required />
+            </div>
+            <div class="col">
+                <label for="awayTeam" class="form-label">Away Team</label>
+                <input type="text" id="awayTeam" name="awayTeam" class="form-control" placeholder="Enter Away Team"
+                    required />
+            </div>
+        </div>
 
-    <label>Score 1: </label>
-    <input type="number" id="score1" name="score1" min="0" required/><br>
+        <div class="row mb-3">
+            <div class="col">
+                <label for="homeTeamScore" class="form-label">Home Team Score</label>
+                <input type="number" id="homeTeamScore" name="homeTeamScore" class="form-control" min="0" required />
+            </div>
+            <div class="col">
+                <label for="awayTeamScore" class="form-label">Away Team Score</label>
+                <input type="number" id="awayTeamScore" name="awayTeamScore" class="form-control" min="0" required />
+            </div>
+        </div>
 
-    <label>Score 2: </label>
-    <input type="number" id="score2" name="score2" min="0" required/><br>
+        <div class="mb-3">
+            <label for="dateSubmitted" class="form-label">Date</label>
+            <input type="date" id="dateSubmitted" name="dateSubmitted" class="form-control" required />
+        </div>
 
-    <label>Date: </label>
-    <input type="date" id="dateSubmitted" name="dateSubmitted" required/><br>
+        <div class="mb-3">
+            <label for="location" class="form-label">Location</label>
+            <input type="text" id="location" name="location" class="form-control" placeholder="Enter Location"
+                required />
+        </div>
 
-    <label>Location: </label>
-    <input type="text" id="location" name="location" required/><br>
+        <div class="mb-3">
+            <label for="gameType" class="form-label">Game Type</label>
+            <input type="text" id="gameType" name="gameType" class="form-control" placeholder="Enter Game Type"
+                required />
+        </div>
 
-    <label>Game Type: </label>
-    <input type="text" id="gameType" name="gameType" required/><br>
-
-    <label>Player of the Game: </label>
-    <input type="text" id="playerOfTheGame" name="playerOfTheGame" required/><br>
-
-    <input type="submit" value="Submit Score" />
-</form>
+        <button type="submit" class="btn btn-success w-100"><i class="fas fa-paper-plane"></i> Submit Score</button>
+    </form>
+</div>
 
 <!-- Filtering form for past games by a single date -->
-<h3>Filter Past Games</h3>
-<form method="get" id="filterForm">
-    <label>Game Date: </label>
-    <input type="date" name="gameDate" /><br>
-    <label>Team: </label>
-    <input type="text" name="team" /><br>
-    <input type="submit" value="Filter" />
-</form>
+<div class="card my-4 p-4 shadow-sm border-0">
+    <h3 class="card-title">Filter Past Games</h3>
+    <form method="get" id="filterForm">
+        <div class="row mb-3">
+            <div class="col">
+                <label for="gameDate" class="form-label">Game Date</label>
+                <input type="date" id="gameDate" name="gameDate" class="form-control" />
+            </div>
+            <div class="col">
+                <label for="team" class="form-label">Team</label>
+                <input type="text" id="team" name="team" class="form-control" placeholder="Enter Team Name" />
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary w-100"><i class="fas fa-filter"></i> Filter</button>
+    </form>
+</div>
 
+<!-- SignalR scripts for real-time updates -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.9/signalr.min.js"></script>
 
 <script>
@@ -78,47 +135,35 @@
     // Form submit handler for real-time updates
     document.getElementById("scoreForm").addEventListener("submit", function (event) {
         event.preventDefault();
-        var team1 = document.getElementById("team1").value;
-        var team2 = document.getElementById("team2").value;
-        var score1 = document.getElementById("score1").value;
-        var score2 = document.getElementById("score2").value;
-        var dateSubmitted = new Date(document.getElementById("dateSubmitted").value).toISOString();  // Convert date to ISO string
+
+        var homeTeam = document.getElementById("homeTeam").value;
+        var awayTeam = document.getElementById("awayTeam").value;
+        var homeTeamScore = document.getElementById("homeTeamScore").value;
+        var awayTeamScore = document.getElementById("awayTeamScore").value;
+
+        // Convert date to UTC before sending
+        var dateSubmitted = new Date(document.getElementById("dateSubmitted").value);
+        dateSubmitted.setUTCHours(12); // Set to noon UTC to avoid date shift
+        dateSubmitted = dateSubmitted.toISOString();
+
         var location = document.getElementById("location").value;
         var gameType = document.getElementById("gameType").value;
-        var playerOfTheGame = document.getElementById("playerOfTheGame").value;
 
-        // Send score update via SignalR
-        connection.invoke("SendScoreUpdate", team1, team2, parseInt(score1), parseInt(score2), dateSubmitted, location, gameType, playerOfTheGame)
-        .then(() => {
-            console.log("Score submission sent");
-        })
-        .catch(function (err) {
-            console.error(err.toString());
-        });
+        connection.invoke("SendScoreUpdate", homeTeam, awayTeam, parseInt(homeTeamScore), parseInt(awayTeamScore), dateSubmitted, location, gameType)
+            .then(() => {
+                console.log("Score submission sent");
+            })
+            .catch(function (err) {
+                console.error(err.toString());
+            });
 
         // Clear the form after submission
         document.getElementById("scoreForm").reset();
     });
 
     // Receive real-time score updates and update the scoreboard
-    connection.on("ReceiveScoreUpdate", function (team1, team2, score1, score2) {
-        document.getElementById("team1-score").innerText = team1 + ": " + score1;
-        document.getElementById("team2-score").innerText = team2 + ": " + score2;
-    });
-
-    // Receive real-time past games updates
-    connection.on("ReceivePastGamesUpdate", function (pastGames) {
-        var pastGamesList = document.getElementById("pastGamesList");
-        pastGamesList.innerHTML = "";
-        pastGames.forEach(function(game) {
-            var li = document.createElement("li");
-            li.innerHTML = game.team1 + " " + game.score1 + " - " + game.team2 + " " + game.score2 + " (" + new Date(game.dateSubmitted).toLocaleDateString() + ")" +
-                "<br><strong>Location:</strong> " + game.location + 
-                "<br><strong>Game Type:</strong> " + game.gameType +
-                "<br><strong>Player of the Game:</strong> " + game.playerOfTheGame +
-                "<br><a href='/Home/Edit/" + game.id + "'>Edit</a>" +
-                " <a href='/Home/Delete/" + game.id + "'>Delete</a>";
-            pastGamesList.appendChild(li);
-        });
+    connection.on("ReceiveScoreUpdate", function (homeTeam, awayTeam, homeTeamScore, awayTeamScore) {
+        document.getElementById("homeTeam-score").innerText = homeTeam + ": " + homeTeamScore;
+        document.getElementById("awayTeam-score").innerText = awayTeam + ": " + awayTeamScore;
     });
 </script>

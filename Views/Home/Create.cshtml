@@ -2,19 +2,12 @@
 
 <div class="container my-4">
     <div class="card p-4 shadow-sm border-0">
-        <h2 class="card-title mb-4 text-center"><i class="fas fa-edit"></i> Edit Game</h2>
+        <h2 class="card-title mb-4 text-center"><i class="fas fa-plus-circle"></i> Add New Game</h2>
 
-        <form asp-action="Edit" method="post" class="mb-3">
-            <input type="hidden" asp-for="Id" />
-            
-            <div class="mb-3">
-                <label for="sport" class="form-label">Sport</label>
-                <input asp-for="Sport" class="form-control" placeholder="Enter Sport" required />
-            </div>
-
+        <form asp-action="SubmitScore" method="post" class="mb-3">
             <div class="mb-3">
                 <label for="homeTeam" class="form-label">Home Team</label>
-                <input asp-for="HomeTeam" class="form-control" placeholder="Enter Home Team Name" required />
+                <input asp-for="HomeTeam" class="form-control" placeholder="Enter Home Team" required />
             </div>
 
             <div class="mb-3">
@@ -24,7 +17,7 @@
 
             <div class="mb-3">
                 <label for="awayTeam" class="form-label">Away Team</label>
-                <input asp-for="AwayTeam" class="form-control" placeholder="Enter Away Team Name" required />
+                <input asp-for="AwayTeam" class="form-control" placeholder="Enter Away Team" required />
             </div>
 
             <div class="mb-3">
@@ -39,7 +32,7 @@
 
             <div class="mb-3">
                 <label for="location" class="form-label">Location</label>
-                <input asp-for="Location" class="form-control" placeholder="Enter Game Location" required />
+                <input asp-for="Location" class="form-control" placeholder="Enter Location" required />
             </div>
 
             <div class="mb-3">
@@ -47,11 +40,7 @@
                 <input asp-for="GameType" class="form-control" placeholder="Enter Game Type" required />
             </div>
 
-            <div class="d-flex justify-content-between">
-                <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Save Changes</button>
-                <a asp-action="Index" class="btn btn-secondary ms-2"><i class="fas fa-arrow-left"></i> Back to Past
-                    Games</a>
-            </div>
+            <button type="submit" class="btn btn-success w-100"><i class="fas fa-paper-plane"></i> Submit Game</button>
         </form>
     </div>
 </div>
